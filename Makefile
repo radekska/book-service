@@ -13,7 +13,7 @@ up:
 	docker-compose -f ${DOCKER_COMPOSE} up -d
 
 down:
-	docker-compose -f ${DOCKER_COMPOSE} kill
+	docker-compose -f ${DOCKER_COMPOSE} kill && docker system prune -f --volumes
 
 logs:
 	docker-compose -f ${DOCKER_COMPOSE} logs app | tail -100
