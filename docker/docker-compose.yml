@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../src:/app/src
+    env_file:
+      - ../.env
+    restart: on-failure
+    ports:
+      - "8080:8000"
+
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=secret123
+      - POSTGRES_DB=books
+    restart: always

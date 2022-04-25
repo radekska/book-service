@@ -1,0 +1,25 @@
+# these will speed up builds, for docker-compose >= 1.25
+export COMPOSE_DOCKER_CLI_BUILD=1
+export DOCKER_BUILDKIT=1
+
+DOCKER_COMPOSE=${PWD}/docker/docker-compose.yml
+
+all: down build up test black
+
+build:
+	docker-compose -f ${DOCKER_COMPOSE} build --no-cache
+
+up:
+	docker-compose -f ${DOCKER_COMPOSE} up -d
+
+down:
+	docker-compose -f ${DOCKER_COMPOSE} kill
+
+logs:
+	docker-compose -f ${DOCKER_COMPOSE} logs app | tail -100
+
+test:
+	docker-compose -f ${DOCKER_COMPOSE} exec app pytest -vvv
+
+black:
+	black -l 86 .
