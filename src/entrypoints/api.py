@@ -4,8 +4,10 @@ from typing import List
 
 import databases
 import sqlalchemy
+from starlette import status
+
 from settings import DATABASE_URL
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 
 database = databases.Database(DATABASE_URL)
@@ -53,8 +55,13 @@ async def get_book(book_id: int):
     return await database.fetch_one(query)
 
 
-@app.post("/books/", status_code=http.HTTPStatus.CREATED)
+@app.post("/books", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 async def create_book(book: BookIn):
     query = books.insert().values(tittle=book.tittle, author=book.author)
-    book_id = await database.execute(query)
-    return {"id": book_id}
+    await database.execute(query)
+
+
+@app.get("/books", response_model=List[BookOut])
+async def get_books():
+    query = books.select()
+    return await database.fetch_all(query)
