@@ -37,13 +37,11 @@ async def create_book(book: BookIn):
     await BookRepository(table=books).add(book=book)
 
 
-@app.get("/books", response_model=List[BookOut])
+@app.get("/books", status_code=status.HTTP_200_OK, response_model=List[BookOut])
 async def get_books():
     return await BookRepository(table=books).list()
 
 
-#
-#
 @app.put(
     "/books/{book_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -52,4 +50,15 @@ async def get_books():
 async def update_book(book_id: int, book: BookIn):
     is_updated = await BookRepository(table=books).update(book_id, book)
     if not is_updated:
+        raise BookNotFound(book_id=book_id)
+
+
+@app.delete(
+    "/books/{book_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+async def delete_book(book_id: int):
+    is_deleted = await BookRepository(table=books).delete(book_id=book_id)
+    if not is_deleted:
         raise BookNotFound(book_id=book_id)
