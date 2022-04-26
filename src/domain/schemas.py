@@ -1,12 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class BookIn(BaseModel):
-    tittle: str
-    author: str
+    tittle: str = Field(max_length=191)
+    author: str = Field(max_length=191)
 
 
-class Book(BaseModel):
+class BookOut(BaseModel):
     id: int
-    tittle: str
-    author: str
+    tittle: str = Field(max_length=191)
+    author: str = Field(max_length=191)

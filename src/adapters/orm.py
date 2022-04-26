@@ -1,3 +1,4 @@
+import databases
 import sqlalchemy
 
 from settings import DATABASE_URL
@@ -12,3 +13,5 @@ books = sqlalchemy.Table(
 )
 engine = sqlalchemy.create_engine(DATABASE_URL)
 metadata.create_all(engine)
+
+database = databases.Database(DATABASE_URL)

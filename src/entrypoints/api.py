@@ -1,15 +1,15 @@
 from typing import List
 
-import databases
-from fastapi import FastAPI, Response
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
+from fastapi.responses import Response
 from starlette import status
 
-from adapters.orm import books
-from domain.schemas import BookIn, Book
-from settings import DATABASE_URL
+from adapters.orm import books, database
+from adapters.repository import BookRepository
+from domain.models import Book
+from domain.schemas import BookIn, BookOut
+from entrypoints.exceptions import BookNotFound
 
-database = databases.Database(DATABASE_URL)
 app = FastAPI()
 
 
@@ -23,52 +23,33 @@ async def shutdown():
     await database.disconnect()
 
 
-@app.get(
-    "/books/{book_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=Book,
-    responses={status.HTTP_404_NOT_FOUND: {"message": str}},
-)
+@app.get("/books/{book_id}", status_code=status.HTTP_200_OK, response_model=BookOut)
 async def get_book(book_id: int):
-    query = books.select().where(books.c.id == book_id)
-    book = await database.fetch_one(query)
-    return (
-        book
-        if book
-        else JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "book not found"},
-        )
-    )
+    book = await BookRepository(table=books).get(book_id=book_id)
+    if not book:
+        raise BookNotFound(book_id=book_id)
+    return book
 
 
 @app.post("/books", status_code=status.HTTP_201_CREATED, response_class=Response)
 async def create_book(book: BookIn):
-    query = books.insert().values(tittle=book.tittle, author=book.author)
-    await database.execute(query)
+    book = Book(tittle=book.tittle, author=book.author)
+    await BookRepository(table=books).add(book=book)
 
 
-@app.get("/books", response_model=List[Book])
+@app.get("/books", response_model=List[BookOut])
 async def get_books():
-    query = books.select()
-    return await database.fetch_all(query)
+    return await BookRepository(table=books).list()
 
 
+#
+#
 @app.put(
     "/books/{book_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
 )
-async def update_book(book_id: int, book_in: BookIn):
-    book = await database.fetch_one(books.select().where(books.c.id == book_id))
-    if book is None:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={"message": "book not found"},
-        )
-    query = (
-        books.update()
-        .where(books.c.id == book_id)
-        .values(tittle=book_in.tittle, author=book_in.author)
-    )
-    await database.execute(query)
+async def update_book(book_id: int, book: BookIn):
+    is_updated = await BookRepository(table=books).update(book_id, book)
+    if not is_updated:
+        raise BookNotFound(book_id=book_id)
