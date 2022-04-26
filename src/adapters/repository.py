@@ -25,7 +25,7 @@ class AbstractRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def delete(self) -> None:
+    def delete(self, book_id: int) -> bool:
         pass
 
 
@@ -42,9 +42,7 @@ class BookRepository(AbstractRepository):
         await database.execute(query)
 
     async def update(self, book_id: int, book: Book) -> bool:
-        current_book = await database.fetch_one(
-            self.books.select().where(self.books.c.id == book_id)
-        )
+        current_book = await self.get(book_id)
         if current_book is None:
             return False
         query = (
@@ -59,5 +57,10 @@ class BookRepository(AbstractRepository):
         query = self.books.select()
         return await database.fetch_all(query)
 
-    def delete(self) -> None:
-        pass
+    async def delete(self, book_id: int) -> bool:
+        current_book = await self.get(book_id)
+        if current_book is None:
+            return False
+        query = self.books.delete().where(self.books.c.id == book_id)
+        await database.execute(query)
+        return True
