@@ -6,8 +6,6 @@ services:
     volumes:
       - ../src:/app/src
       - ../bin:/app/bin
-    env_file:
-      - ../.env
     restart: on-failure
     ports:
       - "8080:8000"

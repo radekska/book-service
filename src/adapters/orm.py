@@ -1,7 +1,7 @@
 import databases
 import sqlalchemy
 
-from settings import DATABASE_URL
+from settings import settings
 
 metadata = sqlalchemy.MetaData()
 books = sqlalchemy.Table(
@@ -11,7 +11,7 @@ books = sqlalchemy.Table(
     sqlalchemy.Column("tittle", sqlalchemy.String),
     sqlalchemy.Column("author", sqlalchemy.String),
 )
-engine = sqlalchemy.create_engine(DATABASE_URL)
+engine = sqlalchemy.create_engine(settings.database_url)
 metadata.create_all(engine)
 
-database = databases.Database(DATABASE_URL)
+database = databases.Database(settings.database_url)
