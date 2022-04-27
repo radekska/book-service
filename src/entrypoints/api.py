@@ -54,7 +54,9 @@ async def get_books(authorize: AuthJWT = Depends(AuthJWT)):
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
 )
-async def update_book(book_id: int, book: BookIn, authorize: AuthJWT = Depends(AuthJWT)):
+async def update_book(
+    book_id: int, book: BookIn, authorize: AuthJWT = Depends(AuthJWT)
+):
     authorize.jwt_required()
     is_updated = await BookRepository(table=books).update(book_id, book)
     if not is_updated:
@@ -81,8 +83,7 @@ def get_config():
 @app.exception_handler(AuthJWTException)
 def authjwt_exception_handler(request: Request, exception: AuthJWTException):
     return JSONResponse(
-        status_code=exception.status_code,
-        content={"detail": exception.message}
+        status_code=exception.status_code, content={"detail": exception.message}
     )
 
 
@@ -91,7 +92,7 @@ class User(BaseModel):
     password: str
 
 
-@app.post('/login')
+@app.post("/login")
 async def login(user: User, authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
