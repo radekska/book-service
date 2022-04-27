@@ -5,6 +5,7 @@ services:
       dockerfile: docker/Dockerfile
     volumes:
       - ../src:/app/src
+      - ../bin:/app/bin
     env_file:
       - ../.env
     restart: on-failure
@@ -12,6 +13,7 @@ services:
       - "8080:8000"
     depends_on:
       - db
+    command: [ "./bin/wait-for-it.sh", "db:5432", "--", "uvicorn", "entrypoints.api:app", "--host", "0.0.0.0", "--reload" ]
 
   db:
     image: postgres:latest
@@ -19,4 +21,3 @@ services:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=secret123
       - POSTGRES_DB=books
-    restart: always
