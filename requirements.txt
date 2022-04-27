@@ -6,3 +6,5 @@ psycopg2-binary==2.9.3
 SQLAlchemy~=1.4.35
 pydantic~=1.9.0
 starlette~=0.17.1
+fastapi-jwt-auth==0.5.0
+python-dotenv==0.20.0
