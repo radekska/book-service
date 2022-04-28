@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, Path
 from fastapi.responses import Response, JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
@@ -27,8 +27,11 @@ async def shutdown():
     await database.disconnect()
 
 
+book_path = Path(..., title="The book identifier.", ge=1)
+
+
 @app.get("/books/{book_id}", status_code=status.HTTP_200_OK, response_model=BookOut)
-async def get_book(book_id: int, authorize: AuthJWT = Depends(AuthJWT)):
+async def get_book(book_id: int = book_path, authorize: AuthJWT = Depends(AuthJWT)):
     authorize.jwt_required()
     book = await BookRepository(table=books).get(book_id=book_id)
     if not book:
@@ -55,7 +58,7 @@ async def get_books(authorize: AuthJWT = Depends(AuthJWT)):
     response_class=Response,
 )
 async def update_book(
-    book_id: int, book: BookIn, authorize: AuthJWT = Depends(AuthJWT)
+        book: BookIn, book_id: int = book_path, authorize: AuthJWT = Depends(AuthJWT)
 ):
     authorize.jwt_required()
     is_updated = await BookRepository(table=books).update(book_id, book)
@@ -68,7 +71,7 @@ async def update_book(
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
 )
-async def delete_book(book_id: int, authorize: AuthJWT = Depends(AuthJWT)):
+async def delete_book(book_id: int = book_path, authorize: AuthJWT = Depends(AuthJWT)):
     authorize.jwt_required()
     is_deleted = await BookRepository(table=books).delete(book_id=book_id)
     if not is_deleted:
