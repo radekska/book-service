@@ -3,6 +3,7 @@ from pydantic import BaseSettings, PostgresDsn
 
 class Settings(BaseSettings):
     database_url: PostgresDsn
+    database_echo_log: bool
     authjwt_header_name: str
     authjwt_header_type: str
     authjwt_secret_key: str

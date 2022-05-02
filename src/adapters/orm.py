@@ -1,17 +1,12 @@
-import databases
-import sqlalchemy
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
 
-from settings import settings
+Base = declarative_base()
 
-metadata = sqlalchemy.MetaData()
-books = sqlalchemy.Table(
-    "books",
-    metadata,
-    sqlalchemy.Column("id", sqlalchemy.Integer, primary_key=True),
-    sqlalchemy.Column("tittle", sqlalchemy.String),
-    sqlalchemy.Column("author", sqlalchemy.String),
-)
-engine = sqlalchemy.create_engine(settings.database_url)
-metadata.create_all(engine)
 
-database = databases.Database(settings.database_url)
+class Books(Base):
+    __tablename__ = 'books'
+
+    id = Column(Integer, primary_key=True)
+    tittle = Column(String, nullable=False)
+    author = Column(String, nullable=False)

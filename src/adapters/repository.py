@@ -1,13 +1,20 @@
 import abc
 from typing import List, Optional
 
-import sqlalchemy
+from sqlalchemy import Table
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from adapters.orm import database
+from adapters.orm import Books
 from domain.models import Book
+from domain.schemas import BookOut
 
 
 class AbstractRepository(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def _table(self):
+        pass
+
     @abc.abstractmethod
     async def get(self, book_id) -> Optional[Book]:
         pass
@@ -30,37 +37,45 @@ class AbstractRepository(abc.ABC):
 
 
 class BookRepository(AbstractRepository):
-    def __init__(self, table: sqlalchemy.Table) -> None:
-        self.books = table
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
 
-    async def get(self, book_id: int) -> Optional[Book]:
-        query = self.books.select().where(self.books.c.id == book_id)
-        return await database.fetch_one(query)
+    @property
+    def _table(self) -> Table:
+        return Books
+
+    async def get(self, book_id: int) -> Optional[BookOut]:
+        entry = await self.session.get(self._table, book_id)
+        return BookOut.from_orm(entry)
 
     async def add(self, book: Book) -> None:
-        query = self.books.insert().values(tittle=book.tittle, author=book.author)
-        await database.execute(query)
+        entry = self._table(**book.dict())
+        self.session.add(entry)
+        await self.session.commit()
 
     async def update(self, book_id: int, book: Book) -> bool:
-        current_book = await self.get(book_id)
-        if current_book is None:
-            return False
-        query = (
-            self.books.update()
-            .where(self.books.c.id == book_id)
-            .values(tittle=book.tittle, author=book.author)
-        )
-        await database.execute(query)
-        return True
+        pass
+        # current_book = await self.get(book_id)
+        # if current_book is None:
+        #     return False
+        # query = (
+        #     self._table.update()
+        #         .where(self._table.c.id == book_id)
+        #         .values(tittle=book.tittle, author=book.author)
+        # )
+        # await database.execute(query)
+        # return True
 
     async def list(self) -> List[Book]:
-        query = self.books.select()
-        return await database.fetch_all(query)
+        pass
+        # query = self._table.select()
+        # return await database.fetch_all(query)
 
     async def delete(self, book_id: int) -> bool:
-        current_book = await self.get(book_id)
-        if current_book is None:
-            return False
-        query = self.books.delete().where(self.books.c.id == book_id)
-        await database.execute(query)
-        return True
+        pass
+        # current_book = await self.get(book_id)
+        # if current_book is None:
+        #     return False
+        # query = self._table.delete().where(self._table.c.id == book_id)
+        # await database.execute(query)
+        # return True

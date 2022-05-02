@@ -5,11 +5,12 @@ from fastapi.responses import Response, JSONResponse
 from fastapi_jwt_auth import AuthJWT
 from fastapi_jwt_auth.exceptions import AuthJWTException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from adapters.orm import books, database
+from adapters.orm import Books, Base
 from adapters.repository import BookRepository
-from domain.models import Book
+from database.session import async_session, engine
 from domain.schemas import BookIn, BookOut
 from entrypoints.exceptions import BookNotFound
 from settings import settings
@@ -19,28 +20,34 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup():
-    await database.connect()
+    # create db tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
 
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+async def get_db() -> AsyncSession:
+    """
+    Dependency function that yields db sessions
+    """
+    async with async_session() as session:
+        yield session
+        await session.commit()
 
 
 @app.get("/books/{book_id}", status_code=status.HTTP_200_OK, response_model=BookOut)
-async def get_book(book_id: int, authorize: AuthJWT = Depends(AuthJWT)):
+async def get_book(book_id: int, authorize: AuthJWT = Depends(AuthJWT), session: AsyncSession = Depends(get_db)):
     authorize.jwt_required()
-    book = await BookRepository(table=books).get(book_id=book_id)
+    book = await BookRepository(session).get(book_id=book_id)
     if not book:
         raise BookNotFound(book_id=book_id)
     return book
 
 
 @app.post("/books", status_code=status.HTTP_201_CREATED, response_class=Response)
-async def create_book(book: BookIn, authorize: AuthJWT = Depends(AuthJWT)):
+async def create_book(book: BookIn, authorize: AuthJWT = Depends(AuthJWT), session: AsyncSession = Depends(get_db)):
     authorize.jwt_required()
-    book = Book(tittle=book.tittle, author=book.author)
-    await BookRepository(table=books).add(book=book)
+    await BookRepository(session).add(book=book)
 
 
 @app.get("/books", status_code=status.HTTP_200_OK, response_model=List[BookOut])
@@ -55,7 +62,7 @@ async def get_books(authorize: AuthJWT = Depends(AuthJWT)):
     response_class=Response,
 )
 async def update_book(
-    book_id: int, book: BookIn, authorize: AuthJWT = Depends(AuthJWT)
+        book_id: int, book: BookIn, authorize: AuthJWT = Depends(AuthJWT)
 ):
     authorize.jwt_required()
     is_updated = await BookRepository(table=books).update(book_id, book)
