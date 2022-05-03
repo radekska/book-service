@@ -11,7 +11,15 @@ services:
       - "8080:8000"
     depends_on:
       - db
-    command: [ "./bin/wait-for-it.sh", "db:5432", "--", "uvicorn", "entrypoints.api:app", "--host", "0.0.0.0", "--reload" ]
+    command:
+      - "./bin/wait-for-it.sh"
+      - "db:5432"
+      - "--"
+      - "uvicorn"
+      - "entrypoints.api:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--reload"
 
   db:
     image: postgres:latest
