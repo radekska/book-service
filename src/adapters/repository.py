@@ -1,17 +1,18 @@
 import abc
-from typing import List, Optional, Iterable
+from typing import Optional, Iterable
 
+from domain.models import Book
+from domain.schemas import BookOut
 from pydantic import BaseModel
 from sqlalchemy import update, delete
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from domain.models import Book
-from domain.schemas import BookOut
-
 
 class AbstractRepository(abc.ABC):
+    session: AsyncSession
+
     @property
     @abc.abstractmethod
     def _schema(self) -> BaseModel:
@@ -31,22 +32,6 @@ class AbstractRepository(abc.ABC):
         except NoResultFound:
             return
         return self._schema.from_orm(entry)
-
-    @abc.abstractmethod
-    def add(self, _id) -> None:
-        pass
-
-    @abc.abstractmethod
-    def update(self, _id: int, book: Book) -> bool:
-        pass
-
-    @abc.abstractmethod
-    def list(self) -> List[Book]:
-        pass
-
-    @abc.abstractmethod
-    def delete(self, _id: int) -> bool:
-        pass
 
 
 class BookRepository(AbstractRepository):
@@ -71,8 +56,8 @@ class BookRepository(AbstractRepository):
             return False
         await self.session.execute(
             update(self._model)
-            .where(self._model.id == _id)
-            .values(tittle=book.tittle, author=book.author)
+                .where(self._model.id == _id)
+                .values(tittle=book.tittle, author=book.author)
         )
         return True
 
