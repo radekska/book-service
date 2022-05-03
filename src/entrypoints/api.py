@@ -10,7 +10,7 @@ from starlette import status
 
 from adapters.orm import mapper_registry
 from adapters.repository import BookRepository
-from database.session import async_session, engine
+from database.session import engine, get_db
 from domain.models import Book
 from domain.schemas import BookIn, BookOut
 from entrypoints.exceptions import BookNotFound
@@ -24,15 +24,6 @@ async def startup():
     async with engine.begin() as connection:
         # await connection.run_sync(mapper_registry.metadata.drop_all)
         await connection.run_sync(mapper_registry.metadata.create_all)
-
-
-async def get_db() -> AsyncSession:
-    """
-    Dependency function that yields db sessions
-    """
-    async with async_session() as session:
-        yield session
-        await session.commit()
 
 
 @app.get("/books/{book_id}", status_code=status.HTTP_200_OK, response_model=BookOut)
@@ -93,7 +84,10 @@ async def update_book(
     status_code=status.HTTP_204_NO_CONTENT,
     response_class=Response,
 )
-async def delete_book(book_id: int, authorize: AuthJWT = Depends(AuthJWT),    session: AsyncSession = Depends(get_db),
+async def delete_book(
+    book_id: int,
+    authorize: AuthJWT = Depends(AuthJWT),
+    session: AsyncSession = Depends(get_db),
 ):
     authorize.jwt_required()
     is_deleted = await BookRepository(session=session).delete(_id=book_id)

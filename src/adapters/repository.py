@@ -56,8 +56,8 @@ class BookRepository(AbstractRepository):
             return False
         await self.session.execute(
             update(self._model)
-                .where(self._model.id == _id)
-                .values(tittle=book.tittle, author=book.author)
+            .where(self._model.id == _id)
+            .values(tittle=book.tittle, author=book.author)
         )
         return True
 
