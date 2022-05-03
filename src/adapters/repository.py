@@ -1,10 +1,12 @@
 import abc
-from typing import List, Optional
+from typing import List, Optional, Iterable
 
-from sqlalchemy import Table
+from pydantic import BaseModel
+from sqlalchemy import update, delete
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
-from adapters.orm import Books
 from domain.models import Book
 from domain.schemas import BookOut
 
@@ -12,19 +14,30 @@ from domain.schemas import BookOut
 class AbstractRepository(abc.ABC):
     @property
     @abc.abstractmethod
-    def _table(self):
+    def _schema(self) -> BaseModel:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def _model(self):
+        pass
+
+    async def get_by_id(self, _id: int) -> Optional[BaseModel]:
+        entry = await self.session.execute(
+            select(self._model).where(self._model.id == _id)
+        )
+        try:
+            entry = entry.scalar_one()
+        except NoResultFound:
+            return
+        return self._schema.from_orm(entry)
+
+    @abc.abstractmethod
+    def add(self, _id) -> None:
         pass
 
     @abc.abstractmethod
-    async def get(self, book_id) -> Optional[Book]:
-        pass
-
-    @abc.abstractmethod
-    def add(self, book_id) -> None:
-        pass
-
-    @abc.abstractmethod
-    def update(self, book_id: int, book: Book) -> bool:
+    def update(self, _id: int, book: Book) -> bool:
         pass
 
     @abc.abstractmethod
@@ -32,7 +45,7 @@ class AbstractRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def delete(self, book_id: int) -> bool:
+    def delete(self, _id: int) -> bool:
         pass
 
 
@@ -41,41 +54,35 @@ class BookRepository(AbstractRepository):
         self.session = session
 
     @property
-    def _table(self) -> Table:
-        return Books
+    def _schema(self) -> BookOut:
+        return BookOut
 
-    async def get(self, book_id: int) -> Optional[BookOut]:
-        entry = await self.session.get(self._table, book_id)
-        return BookOut.from_orm(entry)
+    @property
+    def _model(self) -> Book:
+        return Book
 
     async def add(self, book: Book) -> None:
-        entry = self._table(**book.dict())
-        self.session.add(entry)
+        self.session.add(book)
         await self.session.commit()
 
-    async def update(self, book_id: int, book: Book) -> bool:
-        pass
-        # current_book = await self.get(book_id)
-        # if current_book is None:
-        #     return False
-        # query = (
-        #     self._table.update()
-        #         .where(self._table.c.id == book_id)
-        #         .values(tittle=book.tittle, author=book.author)
-        # )
-        # await database.execute(query)
-        # return True
+    async def update(self, _id: int, book: Book) -> bool:
+        current_book = await self.get_by_id(_id)
+        if not current_book:
+            return False
+        await self.session.execute(
+            update(self._model)
+            .where(self._model.id == _id)
+            .values(tittle=book.tittle, author=book.author)
+        )
+        return True
 
-    async def list(self) -> List[Book]:
-        pass
-        # query = self._table.select()
-        # return await database.fetch_all(query)
+    async def list(self) -> Iterable[BookOut]:
+        books = await self.session.execute(select(self._model))
+        return (self._schema.from_orm(book) for book in books.scalars())
 
-    async def delete(self, book_id: int) -> bool:
-        pass
-        # current_book = await self.get(book_id)
-        # if current_book is None:
-        #     return False
-        # query = self._table.delete().where(self._table.c.id == book_id)
-        # await database.execute(query)
-        # return True
+    async def delete(self, _id: int) -> bool:
+        current_book = await self.get_by_id(_id)
+        if current_book is None:
+            return False
+        await self.session.execute(delete(self._model).where(self._model.id == _id))
+        return True

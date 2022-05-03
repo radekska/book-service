@@ -1,12 +1,16 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Integer, String, Table
+from sqlalchemy.orm import registry
 
-Base = declarative_base()
+from domain.models import Book
 
+mapper_registry = registry()
 
-class Books(Base):
-    __tablename__ = 'books'
+books = Table(
+    "books",
+    mapper_registry.metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("tittle", String(191)),
+    Column("author", String(191)),
+)
 
-    id = Column(Integer, primary_key=True)
-    tittle = Column(String, nullable=False)
-    author = Column(String, nullable=False)
+mapper_registry.map_imperatively(Book, books)
