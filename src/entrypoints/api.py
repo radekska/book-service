@@ -112,7 +112,7 @@ class User(BaseModel):
     password: str
 
 
-@app.post("/login")
+@app.post("/token")
 async def login(user: User, authorize: AuthJWT = Depends()):
     if user.username != "test" or user.password != "test":
         raise HTTPException(status_code=401, detail="Bad username or password")
