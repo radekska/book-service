@@ -1,5 +1,8 @@
 FROM python:3.9-slim-buster
 
+RUN apt-get -y update && \
+    apt-get -y upgrade
+
 ENV APP_NAME=app
 COPY requirements.txt /tmp
 RUN pip install -r /tmp/requirements.txt

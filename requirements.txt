@@ -1,3 +1,4 @@
+# app
 databases==0.5.5
 fastapi==0.75.2
 uvicorn==0.17.6
@@ -8,3 +9,10 @@ pydantic~=1.9.0
 starlette~=0.17.1
 fastapi-jwt-auth==0.5.0
 python-dotenv==0.20.0
+
+# dev
+pytest==7.1.2
+httpx==0.22.0
+pytest-asyncio==0.18.3
+pytest-cov==3.0.0
+black==22.3.0
