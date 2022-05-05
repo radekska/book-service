@@ -19,7 +19,7 @@ logs:
 	docker-compose -f ${DOCKER_COMPOSE} logs app | tail -100
 
 test:
-	black -l 86 --check .
+	docker-compose -f ${DOCKER_COMPOSE} exec app black -l 86 --check .
 	docker-compose -f ${DOCKER_COMPOSE} exec app pytest -v \
 			--asyncio-mode=strict \
 			--cov-config="tests/.coveragerc" \
