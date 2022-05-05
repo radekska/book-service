@@ -14,4 +14,4 @@ jobs:
         run: make build && make up
 
       - name: Test App
-        run: make test
+        run: TTY=-T make test
