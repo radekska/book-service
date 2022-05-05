@@ -1,5 +1,5 @@
 # BookService
-Toy project for testing out FastAPI and some architecure patterns
+Toy project for playing with FastAPI and some architecture patterns asynchronously
 
 ### How to interact
 To build application simply run:
