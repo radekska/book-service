@@ -3,7 +3,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from adapters.repository import BookRepository
+from adapters.repository import SQLAlchemyBookRepository
 from domain.models import Book
 from domain.schemas import BookOut
 
@@ -13,7 +13,7 @@ pytestmark = pytest.mark.asyncio
 async def test_book_create(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    book_repository = BookRepository(session=db_session)
+    book_repository = SQLAlchemyBookRepository(session=db_session)
     payload = {
         "tittle": "How to buy Twitter",
         "author": "Elon Musk",
@@ -30,7 +30,7 @@ async def test_book_create(
 async def test_book_retrieve(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    await BookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).add(
         book=Book(tittle="Performance over Horizon", author="John Doe")
     )
 
@@ -47,10 +47,10 @@ async def test_book_retrieve(
 async def test_books_retrieve(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    await BookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).add(
         book=Book(tittle="Performance over Horizon", author="John Doe")
     )
-    await BookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).add(
         book=Book(tittle="Python Pro", author="Jane Doe")
     )
 
@@ -66,7 +66,7 @@ async def test_books_retrieve(
 async def test_book_update(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    repository = BookRepository(session=db_session)
+    repository = SQLAlchemyBookRepository(session=db_session)
     await repository.add(
         Book(tittle="Microservices security in action", author="Joe Doe")
     )
@@ -83,7 +83,7 @@ async def test_book_update(
 async def test_book_delete(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    repository = BookRepository(session=db_session)
+    repository = SQLAlchemyBookRepository(session=db_session)
     await repository.add(
         Book(tittle="Microservices security in action", author="Joe Doe")
     )

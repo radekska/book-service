@@ -28,4 +28,4 @@ test:
 			--cov=src/ tests/
 
 black:
-	docker-compose -f ${DOCKER_COMPOSE} exec ${T} app black -l 86
+	docker-compose -f ${DOCKER_COMPOSE} exec ${T} app black -l 86 .
