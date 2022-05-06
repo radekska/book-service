@@ -29,7 +29,7 @@ class AbstractRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def add(self, book: Book) -> None:
+    async def create(self, book: Book) -> None:
         pass
 
     @abc.abstractmethod
@@ -57,7 +57,7 @@ class SQLAlchemyBookRepository(AbstractRepository):
     def _model(self) -> Book:
         return Book
 
-    async def get_by_id(self, _id: int) -> Optional[Book]:
+    async def get_by_id(self, _id: int) -> Optional[BookOut]:
         entry = await self.session.execute(
             select(self._model).where(self._model.id == _id)
         )
@@ -65,9 +65,9 @@ class SQLAlchemyBookRepository(AbstractRepository):
             entry = entry.scalar_one()
         except NoResultFound:
             return
-        return Book(**self._schema.from_orm(entry).dict())
+        return self._schema.from_orm(entry)
 
-    async def add(self, book: Book) -> None:
+    async def create(self, book: Book) -> None:
         self.session.add(book)
         await self.session.commit()
 
@@ -82,11 +82,9 @@ class SQLAlchemyBookRepository(AbstractRepository):
         )
         return True
 
-    async def list(self) -> Iterable[Book]:
+    async def list(self) -> Iterable[BookOut]:
         books = await self.session.execute(select(self._model))
-        return (
-            Book(**self._schema.from_orm(book).dict()) for book in books.scalars()
-        )
+        return (self._schema.from_orm(book) for book in books.scalars())
 
     async def delete(self, _id: int) -> bool:
         current_book = await self.get_by_id(_id)

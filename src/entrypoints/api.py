@@ -14,7 +14,14 @@ from database.session import engine, get_db
 from domain.models import Book
 from domain.schemas import BookIn, BookOut
 from entrypoints.exceptions import BookNotFound
-from service_layer.services import get, BookNotFoundInRepository, add
+from service_layer.services import (
+    get,
+    BookNotFoundInRepository,
+    create,
+    get_many,
+    update,
+    delete,
+)
 from settings import settings
 
 app = FastAPI()
@@ -50,7 +57,7 @@ async def create_book(
     session: AsyncSession = Depends(get_db),
 ):
     authorize.jwt_required()
-    await add(
+    await create(
         book=Book(tittle=book_in.tittle, author=book_in.author),
         repository=SQLAlchemyBookRepository(session=session),
     )
@@ -62,7 +69,7 @@ async def get_books(
     session: AsyncSession = Depends(get_db),
 ):
     authorize.jwt_required()
-    return await SQLAlchemyBookRepository(session=session).list()
+    return await get_many(repository=SQLAlchemyBookRepository(session=session))
 
 
 @app.put(
@@ -77,10 +84,13 @@ async def update_book(
     session: AsyncSession = Depends(get_db),
 ):
     authorize.jwt_required()
-    is_updated = await SQLAlchemyBookRepository(session=session).update(
-        book_id, book=Book(tittle=book_in.tittle, author=book_in.author)
-    )
-    if not is_updated:
+    try:
+        await update(
+            book_id=book_id,
+            book=Book(tittle=book_in.tittle, author=book_in.author),
+            repository=SQLAlchemyBookRepository(session=session),
+        )
+    except BookNotFoundInRepository:
         raise BookNotFound(book_id=book_id)
 
 
@@ -95,8 +105,11 @@ async def delete_book(
     session: AsyncSession = Depends(get_db),
 ):
     authorize.jwt_required()
-    is_deleted = await SQLAlchemyBookRepository(session=session).delete(_id=book_id)
-    if not is_deleted:
+    try:
+        await delete(
+            book_id=book_id, repository=SQLAlchemyBookRepository(session=session)
+        )
+    except BookNotFoundInRepository:
         raise BookNotFound(book_id=book_id)
 
 

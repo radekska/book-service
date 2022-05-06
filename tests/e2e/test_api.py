@@ -30,7 +30,7 @@ async def test_book_create(
 async def test_book_retrieve(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    await SQLAlchemyBookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).create(
         book=Book(tittle="Performance over Horizon", author="John Doe")
     )
 
@@ -47,10 +47,10 @@ async def test_book_retrieve(
 async def test_books_retrieve(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    await SQLAlchemyBookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).create(
         book=Book(tittle="Performance over Horizon", author="John Doe")
     )
-    await SQLAlchemyBookRepository(session=db_session).add(
+    await SQLAlchemyBookRepository(session=db_session).create(
         book=Book(tittle="Python Pro", author="Jane Doe")
     )
 
@@ -67,7 +67,7 @@ async def test_book_update(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
     repository = SQLAlchemyBookRepository(session=db_session)
-    await repository.add(
+    await repository.create(
         Book(tittle="Microservices security in action", author="Joe Doe")
     )
 
@@ -84,7 +84,7 @@ async def test_book_delete(
     authed_async_client: AsyncClient, db_session: AsyncSession
 ) -> None:
     repository = SQLAlchemyBookRepository(session=db_session)
-    await repository.add(
+    await repository.create(
         Book(tittle="Microservices security in action", author="Joe Doe")
     )
 
