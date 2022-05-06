@@ -1,17 +1,18 @@
 import abc
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Any
 
-from domain.models import Book
-from domain.schemas import BookOut
 from pydantic import BaseModel
 from sqlalchemy import update, delete
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from domain.models import Book
+from domain.schemas import BookOut
+
 
 class AbstractRepository(abc.ABC):
-    session: AsyncSession
+    session: Any
 
     @property
     @abc.abstractmethod
@@ -23,18 +24,28 @@ class AbstractRepository(abc.ABC):
     def _model(self):
         pass
 
-    async def get_by_id(self, _id: int) -> Optional[BaseModel]:
-        entry = await self.session.execute(
-            select(self._model).where(self._model.id == _id)
-        )
-        try:
-            entry = entry.scalar_one()
-        except NoResultFound:
-            return
-        return self._schema.from_orm(entry)
+    @abc.abstractmethod
+    async def get_by_id(self, _id: int) -> Optional[Book]:
+        pass
+
+    @abc.abstractmethod
+    async def create(self, book: Book) -> None:
+        pass
+
+    @abc.abstractmethod
+    async def update(self, _id: int, book: Book) -> bool:
+        pass
+
+    @abc.abstractmethod
+    async def list(self) -> Iterable[Book]:
+        pass
+
+    @abc.abstractmethod
+    async def delete(self, _id: int) -> bool:
+        pass
 
 
-class BookRepository(AbstractRepository):
+class SQLAlchemyBookRepository(AbstractRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -46,7 +57,17 @@ class BookRepository(AbstractRepository):
     def _model(self) -> Book:
         return Book
 
-    async def add(self, book: Book) -> None:
+    async def get_by_id(self, _id: int) -> Optional[BookOut]:
+        entry = await self.session.execute(
+            select(self._model).where(self._model.id == _id)
+        )
+        try:
+            entry = entry.scalar_one()
+        except NoResultFound:
+            return
+        return self._schema.from_orm(entry)
+
+    async def create(self, book: Book) -> None:
         self.session.add(book)
         await self.session.commit()
 
