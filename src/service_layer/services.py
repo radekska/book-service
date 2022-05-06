@@ -1,4 +1,4 @@
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Iterable
 
 from adapters.repository import AbstractRepository
 from domain.models import Book
@@ -9,8 +9,10 @@ class BookNotFoundInRepository(Exception):
         super().__init__(f"Book with identifier '{book_id}' not found in repository")
 
 
-def update(book: Book, repository: AbstractRepository):
-    pass
+async def update(book: Book, repository: AbstractRepository) -> None:
+    is_updated = await repository.update(book=book)
+    if not is_updated:
+        raise BookNotFoundInRepository(book_id=book.id)
 
 
 async def add(book: Book, repository: AbstractRepository) -> None:
@@ -20,9 +22,9 @@ async def add(book: Book, repository: AbstractRepository) -> None:
 async def get(book_id: int, repository: AbstractRepository) -> Book:
     book = await repository.get_by_id(_id=book_id)
     if book is None:
-        raise BookNotFoundInRepository
+        raise BookNotFoundInRepository(book_id=book_id)
     return book
 
 
-def many():
-    pass
+async def get_many(repository: AbstractRepository) -> Iterable[Book]:
+    return await repository.list()
